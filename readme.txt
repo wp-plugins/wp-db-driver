@@ -1,4 +1,4 @@
-=== WP DB driver ===
+=== WP DB Driver ===
 Contributors: kurtpayne, markoheijnen
 Tags: database, backend
 Requires at least: 3.6
