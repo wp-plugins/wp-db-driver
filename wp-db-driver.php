@@ -5,7 +5,7 @@ Plugin URI: http://core.trac.wordpress.org/ticket/21663
 Description: Enables PDO or MySQLi
 Author: Kurt Payne and Marko Heijnen
 Text Domain: wp-db-driver
-Version: 1.2
+Version: 1.3
 Author URI: http://core.trac.wordpress.org/ticket/21663
 */
 
@@ -137,21 +137,31 @@ class WP_DB_Driver_Plugin {
 				echo '<form method="post" style="display: inline;">';
 				wp_nonce_field('uninstall-db-nonce');
 
-				echo '<p><strong>' . $this->get_current_driver() . '</strong> ';
-				submit_button( __( 'Remove', 'wp-db-driver' ), 'primary', 'install-db-php', false );
+				echo '<p><strong>' . $this->get_current_driver() . '</strong> &nbsp; ';
+
+				if( function_exists( 'mysql' ) )
+					submit_button( __( 'Remove', 'wp-db-driver' ), 'primary', 'install-db-php', false );
+
 				echo '</p>';
 
 				echo '</form>';
 
 			} else {
-				echo '<p><strong>' . __( 'Another db.php is installed', 'wp-db-driver' ) . '</strong></p>';
+				echo '<form method="post" style="display: inline;">';
+				wp_nonce_field('install-db-nonce');
+
+				echo '<p><strong>' . __( 'Another db.php is installed', 'wp-db-driver' ) . '</strong> &nbsp; ';
+				submit_button( __( 'Install', 'wp-db-driver' ), 'primary', 'install-db-php', false );
+				echo '</p>';
+
+				echo '</form>';
 			}
 		}
 		else {
 			echo '<form method="post" style="display: inline;">';
 			wp_nonce_field('install-db-nonce');
 
-			echo '<p><strong>' . __( 'No custom db.php installed', 'wp-db-driver' ) . '</strong> ';
+			echo '<p><strong>' . __( 'No custom db.php installed', 'wp-db-driver' ) . '</strong> &nbsp; ';
 			submit_button( __( 'Install', 'wp-db-driver' ), 'primary', 'install-db-php', false );
 			echo '</p>';
 
