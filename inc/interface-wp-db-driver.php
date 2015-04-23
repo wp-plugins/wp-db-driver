@@ -21,10 +21,14 @@ abstract class wpdb_driver {
 	 * Determine if a database supports a particular feature.
 	 *
 	 * @since 2.7.0
+	 * @since 4.1.0 Support was added for the 'utf8mb4' feature.
+	 *
 	 * @see wpdb::db_version()
 	 *
-	 * @param string $db_cap The feature to check for.
-	 * @return bool
+	 * @param string $db_cap The feature to check for. Accepts 'collation',
+	 *                       'group_concat', 'subqueries', 'set_charset',
+	 *                       or 'utf8mb4'.
+	 * @return bool Whether the database feature is supported, false otherwise.
 	 */
 	public function has_cap( $db_cap ) {
 		$version = $this->db_version();
@@ -36,8 +40,11 @@ abstract class wpdb_driver {
 				return version_compare( $version, '4.1', '>=' );
 			case 'set_charset' :
 				return version_compare( $version, '5.0.7', '>=' );
-		};
+			case 'utf8mb4' :      // @since 4.1.0
+				return version_compare( $version, '5.5.3', '>=' );
+		}
 
 		return false;
 	}
+
 }

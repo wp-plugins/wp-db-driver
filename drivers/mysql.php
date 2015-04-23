@@ -105,8 +105,8 @@ class wpdb_driver_mysql extends wpdb_driver {
 	 * Sets the connection's character set.
 	 *
 	 * @param resource $dbh     The resource given by the driver
-	 * @param string   $charset The character set (optional)
-	 * @param string   $collate The collation (optional)
+	 * @param string   $charset Optional. The character set. Default null.
+	 * @param string   $collate Optional. The collation. Default null.
 	 */
 	public function set_charset( $charset = null, $collate = null ) {
 		if ( $this->has_cap( 'collation' ) && ! empty( $charset ) ) {
@@ -215,6 +215,22 @@ class wpdb_driver_mysql extends wpdb_driver {
 	 */
 	public function db_version() {
 		return preg_replace( '/[^0-9.].*/', '', mysql_get_server_info( $this->dbh ) );
+	}
+
+
+	/**
+	 * Determine if a database supports a particular feature.
+	 */
+	public function has_cap( $db_cap ) {
+		$db_cap = strtolower( $db_cap );
+
+		$version = parent::has_cap( $db_cap );
+
+		if ( $version && 'utf8mb4' === $db_cap ) {
+			return version_compare( mysql_get_client_info(), '5.5.3', '>=' );
+		}
+
+		return $version;
 	}
 
 }

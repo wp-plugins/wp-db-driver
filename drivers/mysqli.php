@@ -59,8 +59,19 @@ class wpdb_driver_mysqli extends wpdb_driver {
 		if ( $this->result instanceof mysqli_stmt ) {
 			$this->result->free_result();
 		}
+
 		$this->result = null;
 		$this->col_info = null;
+
+		// Sanity check before using the handle
+		if ( empty( $this->dbh ) || ! ( $this->dbh instanceof mysqli ) ) {
+			return;
+		}
+
+		// Clear out any results from a multi-query
+		while ( mysqli_more_results( $this->dbh ) ) {
+			mysqli_next_result( $this->dbh );
+		}
 	}
 
 	/**
@@ -135,8 +146,8 @@ class wpdb_driver_mysqli extends wpdb_driver {
 	 * Sets the connection's character set.
 	 *
 	 * @param resource $dbh     The resource given by the driver
-	 * @param string   $charset The character set (optional)
-	 * @param string   $collate The collation (optional)
+	 * @param string   $charset Optional. The character set. Default null.
+	 * @param string   $collate Optional. The collation. Default null.
 	 */
 	public function set_charset( $charset = null, $collate = null ) {
 		if ( $this->has_cap( 'collation' ) && ! empty( $charset ) ) {
@@ -254,4 +265,21 @@ class wpdb_driver_mysqli extends wpdb_driver {
 	public function db_version() {
 		return preg_replace( '/[^0-9.].*/', '', $this->dbh->server_version );
 	}
+
+
+	/**
+	 * Determine if a database supports a particular feature.
+	 */
+	public function has_cap( $db_cap ) {
+		$db_cap = strtolower( $db_cap );
+
+		$version = parent::has_cap( $db_cap );
+
+		if ( $version && 'utf8mb4' === $db_cap ) {
+			return version_compare( mysqli_get_client_info(), '5.5.3', '>=' );
+		}
+
+		return $version;
+	}
+
 }
