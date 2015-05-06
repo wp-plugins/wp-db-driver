@@ -9,7 +9,7 @@
  * @subpackage Database
  * @since 3.6.0
  */
-class wpdb_driver_pdo_mysql implements wpdb_driver {
+class wpdb_driver_pdo_mysql extends wpdb_driver {
 
 	/**
 	 * Database link
@@ -39,8 +39,11 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 
 	/**
 	 * Escape with mysql_real_escape_string()
-	 * @param  string $string
-	 * @return string
+	 *
+	 * @see PDO::quote()
+	 *
+	 * @param  string $string to escape
+	 * @return string escaped
 	 */
 	public function escape( $string ) {
 		return substr( $this->dbh->quote( $string ), 1, -1 );
@@ -48,6 +51,7 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 
 	/**
 	 * Get the latest error message from the DB driver
+	 *
 	 * @return string
 	 */
 	public function get_error_message() {
@@ -60,6 +64,7 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 
 	/**
 	 * Free memory associated with the resultset
+	 *
 	 * @return void
 	 */
 	public function flush() {
@@ -72,11 +77,28 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 	}
 
 	/**
+	 * Check if server is still connected
+	 * @return bool
+	 */
+	public function is_connected() {
+		if ( ! $this->dbh || 2006 == $this->dbh->errorCode() ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Connect to database
 	 * @return bool
 	 */
 	public function connect( $host, $user, $pass, $port = 3306, $options = array() ) {
-		$dsn = sprintf( 'mysql:host=%1$s;port=%2$d', $host, $port );
+		if( '.sock' === substr( $port, -5 ) ) {
+			$dsn = sprintf( 'mysql:host=%1$s;unix_socket=%2$s', $host, $port );
+		}
+		else {
+			$dsn = sprintf( 'mysql:host=%1$s;port=%2$d', $host, $port );
+		}
 
 		try {
 			$pdo_options = array();
@@ -100,6 +122,25 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Ping a server connection or reconnect if there is no connection
+	 * @return bool
+	 */
+	public function ping() {
+		return (bool) $this->query('SELECT 1');
+	}
+
+	/**
+	 * Sets the connection's character set.
+	 *
+	 * @param resource $dbh     The resource given by the driver
+	 * @param string   $charset Optional. The character set. Default null.
+	 * @param string   $collate Optional. The collation. Default null.
+	 */
+	public function set_charset( $charset = null, $collate = null ) {
+		return false;
 	}
 
 	/**
@@ -147,6 +188,20 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 		}
 
 		return $return_val;
+	}
+
+	/**
+	 * Get result data.
+	 * @param int The row number from the result that's being retrieved. Row numbers start at 0.
+	 * @param int The offset of the field being retrieved.
+	 * @return array|false The contents of one cell from a MySQL result set on success, or false on failure.
+	 */
+	public function query_result( $row, $field = 0 ) {
+		if( $row > 1 ) {
+			$this->result->fetch( PDO::FETCH_ASSOC,PDO::FETCH_ORI_NEXT, $row );
+		}
+
+		return $this->result->fetchColumn( $field );
 	}
 
 	/**
@@ -210,6 +265,23 @@ class wpdb_driver_pdo_mysql implements wpdb_driver {
 	public function db_version() {
 		return preg_replace( '/[^0-9.].*/', '', $this->dbh->getAttribute( PDO::ATTR_SERVER_VERSION ) );
 	}
+
+
+	/**
+	 * Determine if a database supports a particular feature.
+	 */
+	public function has_cap( $db_cap ) {
+		$db_cap = strtolower( $db_cap );
+
+		$version = parent::has_cap( $db_cap );
+
+		if ( $version && 'utf8mb4' === $db_cap ) {
+			return version_compare( $this->dbh->getAttribute( PDO::ATTR_CLIENT_VERSION ), '5.5.3', '>=' );
+		}
+
+		return $version;
+	}
+
 
 	/**
 	 * Don't save any state.  The db wrapper should call connect() again.

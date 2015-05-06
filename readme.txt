@@ -1,14 +1,18 @@
 === WP DB Driver ===
-Contributors: kurtpayne, markoheijnen
+Contributors: markoheijnen, kurtpayne
 Tags: database, backend, pdo, mysqli, mysql
 Requires at least: 3.6
-Tested up to: 3.8.1
-Stable tag: 1.7
+Tested up to: 4.2
+Stable tag: 1.9.3
 License: GPLv2 or later
 
-The possible new database layer for WordPress core
+An improved database layer for WordPress
 
 == Description ==
+
+This plugin adds an improved database layer to WordPress. It allows you to do more then the default one and is always up-to-date with the changes core makes.
+
+**mysql_* functions**
 
 The mysql_* functions are officially deprecated for PHP 5.5 and are throwing E_DEPRECATED errors.
 On http://core.trac.wordpress.org/ticket/21663 there is discussion on this topic.
@@ -17,11 +21,7 @@ This plugin reflects those discussions.
 
 **Why should I use this plugin?**
 
-You should use this plugin if you want to help test the proposed changes for PDO / MySQLi for WordPress.  Or if you
-need PDO / MySQLi support for some reason (e.g. you're running php 5.5, your server doesn't have classic mysql
-bindings, etc.)
-
-This plugin is still in development.
+You should use this plugin if you want to start using PDO / MySQLi for WordPress.
 
 == Installation ==
 
@@ -76,8 +76,33 @@ Added emergency override
 
 == Changelog ==
 
+= 1.9.3 (2015-05-07) =
+* Sync with 4.2.2
+
+= 1.9.2 (2015-04-27) =
+* Sync with 4.2.1
+
+= 1.9.1 (2015-04-23) =
+* Fix setting charset and SQL mode for PDO
+
+= 1.9 (2015-04-23) =
+* Sync to changeset 32261
+
+= 1.8.1 (2014-08-08) =
+* Fix setting charset and SQL mode for PDO
+
+= 1.8 (2014-08-07) =
+* Synced with trunk to Changeset 29165 excluding 27075
+ * Ensure compatibility with MySQL 5.6 which has stricter SQL modes by default
+ * Throw an incorrect usage notice when the query argument of wpdb::prepare() does not include a placeholder.
+ * When the MySQL server has "gone away," attempt to reconnect and retry the query.
+* Don't extend wpdb anymore to be on the safe side
+* Works with socket connections
+* More abstraction from the main db class to our interface.
+* Added a banner image for WordPress.org. Thanks to Marcel van der Horst
+
 = 1.7 (2014-01-30) =
-* Synced with the latest changes of WordPress in trunk
+* Synced with trunk to Changeset 25703
 * Works when plugins folder has been changed
 * Added network support
 * Security enhanchement when using a network installation
