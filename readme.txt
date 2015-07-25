@@ -76,6 +76,9 @@ Added emergency override
 
 == Changelog ==
 
+= 2.0.1 =
+* Reupload code from GitHub
+
 = 2.0 (2015-07-25) =
 * Sync with 4.2.3 ( Changeset 33310)
 * Increased minimal WordPress version to 4.2
