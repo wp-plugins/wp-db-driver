@@ -1,9 +1,9 @@
 === WP DB Driver ===
 Contributors: markoheijnen, kurtpayne
 Tags: database, backend, pdo, mysqli, mysql
-Requires at least: 3.6
-Tested up to: 4.2
-Stable tag: 1.9.3
+Requires at least: 4.2
+Tested up to: 4.2.3
+Stable tag: 2.0
 License: GPLv2 or later
 
 An improved database layer for WordPress
@@ -49,9 +49,9 @@ PDO > MySQLi > MySQL
 
 In your wp-config.php, add a new constant:
 
-`define( 'WPDB_DRIVER', 'pdo_mysql' );`
+`define( 'WPDB_DRIVER', 'wpdb_driver_pdo_mysql' );`
 
-You can specify `pdo_mysql`, `mysqli`, or `mysql`.  Any other driver will cause an error.
+You can specify `wpdb_driver_pdo_mysql`, `wpdb_driver_mysqli`, or `wpdb_driver_mysql`.  Any other driver will cause an error.
 
 **Which driver is best for my site?**
 
@@ -75,6 +75,13 @@ For more information see:
 Added emergency override
 
 == Changelog ==
+
+= 2.0 (2015-07-25) =
+* Sync with 4.2.3 ( Changeset 33310)
+* Increased minimal WordPress version to 4.2
+* Extending wpdb back again
+* Add ability to extend it with more drivers through the constant 'WPDB_DRIVERS'
+* Fully compatible with the unit tests of WordPress except HHVM PDO
 
 = 1.9.3 (2015-05-07) =
 * Sync with 4.2.2

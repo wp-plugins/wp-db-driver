@@ -37,6 +37,16 @@ class wpdb_driver_pdo_mysql extends wpdb_driver {
 	 */
 	private $fetched_rows = array();
 
+
+	public static function get_name() {
+		return 'PDO - MySQL';
+	}
+
+	public static function is_supported() {
+		return extension_loaded( 'pdo_mysql' );
+	}
+
+
 	/**
 	 * Escape with mysql_real_escape_string()
 	 *
@@ -125,6 +135,13 @@ class wpdb_driver_pdo_mysql extends wpdb_driver {
 	}
 
 	/**
+	 * Disconnect the database connection
+	 */
+	public function disconnect() {
+		$this->dbh = null;
+	}
+
+	/**
 	 * Ping a server connection or reconnect if there is no connection
 	 * @return bool
 	 */
@@ -164,6 +181,10 @@ class wpdb_driver_pdo_mysql extends wpdb_driver {
 	 */
 	public function query( $query ) {
 		$return_val = 0;
+
+		if ( ! $this->dbh ) {
+			return false;
+		}
 
 		try {
 			$this->result = $this->dbh->query( $query );
@@ -250,11 +271,16 @@ class wpdb_driver_pdo_mysql extends wpdb_driver {
 	 * @return array
 	 */
 	public function load_col_info() {
-		if ( $this->col_info )
+		if ( $this->col_info ) {
 			return $this->col_info;
-		for ( $i = 0; $i < $this->result->columnCount() ; $i++ ) {
-			$this->col_info[ $i ] = $this->result->fetchColumn( $i );
 		}
+
+		$num_fields = $this->result->columnCount();
+
+		for ( $i = 0; $i < $num_fields; $i++ ) {
+			$this->col_info[ $i ] = (object) $this->result->getColumnMeta( $i );
+		}
+
 		return $this->col_info;
 	}
 

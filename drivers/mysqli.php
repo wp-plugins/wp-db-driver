@@ -29,6 +29,16 @@ class wpdb_driver_mysqli extends wpdb_driver {
 	 */
 	private $col_info = null;
 
+
+	public static function get_name() {
+		return 'MySQLi';
+	}
+
+	public static function is_supported() {
+		return extension_loaded( 'mysqli' );
+	}
+
+
 	/**
 	 * Escape with mysql_real_escape_string()
 	 *
@@ -79,7 +89,7 @@ class wpdb_driver_mysqli extends wpdb_driver {
 	 * @return bool
 	 */
 	public function is_connected() {
-		if ( ! $this->dbh || 2006 ==  $this->dbh->connect_errno ) {
+		if ( ! $this->dbh || 2006 == $this->dbh->connect_errno ) {
 			return false;
 		}
 
@@ -135,10 +145,22 @@ class wpdb_driver_mysqli extends wpdb_driver {
 	}
 
 	/**
+	 * Disconnect the database connection
+	 */
+	public function disconnect() {
+		$this->dbh->close();
+		$this->dbh = null;
+	}
+
+	/**
 	 * Ping a server connection or reconnect if there is no connection
 	 * @return bool
 	 */
 	public function ping() {
+		if ( ! $this->dbh ) {
+			return false;
+		}
+
 		return @ $this->dbh->ping();
 	}
 
@@ -177,6 +199,10 @@ class wpdb_driver_mysqli extends wpdb_driver {
 	 */
 	public function query( $query ) {
 		$return_val = 0;
+
+		if ( ! $this->dbh ) {
+			return false;
+		}
 
 		$this->result = $this->dbh->query( $query );
 
@@ -251,7 +277,9 @@ class wpdb_driver_mysqli extends wpdb_driver {
 			return $this->col_info;
 		}
 
-		for ( $i = 0; $i < $this->result->field_count ; $i++ ) {
+		$num_fields = $this->result->field_count;
+
+		for ( $i = 0; $i < $num_fields; $i++ ) {
 			$this->col_info[ $i ] = $this->result->fetch_field_direct( $i );
 		}
 

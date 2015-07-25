@@ -5,7 +5,7 @@
 	Description: Enables PDO or MySQLi
 	Author:      Marko Heijnen and Kurt Payne
 	Text Domain: wp-db-driver
-	Version:     1.9.3
+	Version:     2.0
 	Author URI:  http://core.trac.wordpress.org/ticket/21663
 	Network:     True
 */
@@ -156,7 +156,7 @@ class WP_DB_Driver_Plugin {
 				echo '<form method="post" style="display: inline;">';
 				wp_nonce_field('uninstall-db-nonce');
 
-				echo '<p><strong>' . $this->get_current_driver() . '</strong> &nbsp; ';
+				echo '<p><strong>' . call_user_func( array( WP_DB_Driver_Config::get_current_driver(), 'get_name' ) ) . '</strong> &nbsp; ';
 
 				if ( function_exists( 'mysql' ) && is_super_admin() ) {
 					submit_button( __( 'Remove', 'wp-db-driver' ), 'primary', 'install-db-php', false );
@@ -196,71 +196,36 @@ class WP_DB_Driver_Plugin {
 			echo '</form>';
 		}
 
-
-
-		$loaded_pdo = $loaded_mysqli = $loaded_mysql = __( 'Not installed', 'wp-db-driver' );
-
-		if ( extension_loaded( 'pdo_mysql' ) ) {
-			$loaded_pdo = __( 'Installed', 'wp-db-driver' );
-		}
-
-		if ( extension_loaded( 'mysqli' ) ) {
-			$loaded_mysqli = __( 'Installed', 'wp-db-driver' );
-		}
-
-		if ( extension_loaded( 'mysql' ) ) {
-			$loaded_mysql = __( 'Installed', 'wp-db-driver' );
-		}
-
 		echo '<div class="tool-box"><h3 class="title">' . __( 'Supported drivers', 'wp-db-driver' ) . '</h3></div>';
 
 		echo '<table class="form-table">';
-		echo '<tr>';
-		echo '<th>PDO</th>';
-		echo '<td>' . $loaded_pdo . '</td>';
-		echo '</tr>';
 
+		$drivers = WP_DB_Driver_Config::get_drivers();
+		foreach ( $drivers as $driver => $file ) {
+			include_once $file;
 
-		echo '<tr>';
-		echo '<th>MySQLi</th>';
-		echo '<td>' . $loaded_mysqli . '</td>';
-		echo '</tr>';
+			echo '<tr>';
+			echo '<th>' . call_user_func( array( $driver, 'get_name' ) ) . '</th>';
+			echo '<td>';
 
+			if ( call_user_func( array( $driver, 'is_supported' ) ) ) {
+				_e( 'Installed', 'wp-db-driver' );
+			}
+			else {
+				_e( 'Not installed', 'wp-db-driver' );
+			}
 
-		echo '<tr>';
-		echo '<th>MySQL</th>';
-		echo '<td>' . $loaded_mysql . '</td>';
-		echo '</tr>';
+			echo '</td>';
+			echo '</tr>';
+		}
 
 		echo '</table>';
-	}
-
-	public function get_current_driver() {
-		$driver = false;
-
-		if ( defined( 'WPDB_DRIVER' ) ) {
-			$driver = WPDB_DRIVER;
-		}
-		elseif ( defined( 'WP_USE_EXT_MYSQL' ) && WP_USE_EXT_MYSQL ) {
-			$driver = 'mysql';
-		}
-		elseif ( extension_loaded( 'pdo_mysql' ) ) {
-			$driver = 'PDO';
-		}
-		elseif ( extension_loaded( 'mysqli' ) ) {
-			$driver = 'MySQLi';
-		}
-		elseif ( extension_loaded( 'mysql' ) ) {
-			$driver = 'MySQL';
-		}
-
-		return $driver;
 	}
 
 }
 
 if ( is_admin() ) {
-	new WP_DB_Driver_Plugin;
+	$GLOBAL['wp_db_driver_plugin'] = new WP_DB_Driver_Plugin;
 }
 
 register_deactivation_hook( __FILE__, array( 'WP_DB_Driver_Plugin', 'deactivate' ) );
