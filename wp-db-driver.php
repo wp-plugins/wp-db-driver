@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: WP DB Driver
-Plugin URI:  http://core.trac.wordpress.org/ticket/21663
-Description: Enables PDO or MySQLi
-Author: Kurt Payne and Marko Heijnen
-Text Domain: wp-db-driver
-Version:     1.7
-Author URI:  http://core.trac.wordpress.org/ticket/21663
-Network:     True
+	Plugin Name: WP DB Driver
+	Plugin URI:  http://core.trac.wordpress.org/ticket/21663
+	Description: Enables PDO or MySQLi
+	Author:      Marko Heijnen and Kurt Payne
+	Text Domain: wp-db-driver
+	Version:     2.0
+	Author URI:  http://core.trac.wordpress.org/ticket/21663
+	Network:     True
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,7 +18,7 @@ class WP_DB_Driver_Plugin {
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_page' ) );
-		add_action('network_admin_menu', array( $this, 'add_page' ) );
+		add_action( 'network_admin_menu', array( $this, 'add_page' ) );
 
 		add_action( 'admin_init', array( $this, 'remove_emergency_cookie' ) );
 	}
@@ -38,9 +38,10 @@ class WP_DB_Driver_Plugin {
 	 * WP_Filesystem, because it's not available.
 	 */
 	public static function deactivate() {
-		if( file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
+		if ( file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
 			$crc1 = md5_file( dirname( __FILE__ ) . '/wp-content/db.php' );
 			$crc2 = md5_file( WP_CONTENT_DIR . '/db.php' );
+
 			if ( $crc1 === $crc2 ) {
 				if ( false === @unlink( WP_CONTENT_DIR . '/db.php' ) ) {
 					wp_die( __( 'Please remove the custom db.php drop-in before deactivating WP DB Driver', 'wp-db-driver' ) );
@@ -54,9 +55,11 @@ class WP_DB_Driver_Plugin {
 	 */
 	public static function uninstall() {
 		global $wp_filesystem;
-		if( file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
+
+		if ( file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
 			$crc1 = md5_file( dirname( __FILE__ ) . '/wp-content/db.php' );
 			$crc2 = md5_file( WP_CONTENT_DIR . '/db.php' );
+
 			if ( $crc1 === $crc2 ) {
 				$wp_filesystem->delete( $wp_filesystem->wp_content_dir() . '/db.php' );
 			}
@@ -86,8 +89,9 @@ class WP_DB_Driver_Plugin {
 	}
 
 	public function page_overview() {
-		if ( ! current_user_can( 'manage_options' ) )
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+		}
 
 		echo '<div class="wrap">';
 
@@ -144,7 +148,7 @@ class WP_DB_Driver_Plugin {
 
 		echo '<div class="tool-box"><h3 class="title">' . __( 'Current driver', 'wp-db-driver' ) . '</h3></div>';
 
-		if( file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
+		if ( file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
 			$crc1 = md5_file( dirname( __FILE__ ) . '/wp-content/db.php' );
 			$crc2 = md5_file( WP_CONTENT_DIR . '/db.php' );
 
@@ -152,9 +156,9 @@ class WP_DB_Driver_Plugin {
 				echo '<form method="post" style="display: inline;">';
 				wp_nonce_field('uninstall-db-nonce');
 
-				echo '<p><strong>' . $this->get_current_driver() . '</strong> &nbsp; ';
+				echo '<p><strong>' . call_user_func( array( WP_DB_Driver_Config::get_current_driver(), 'get_name' ) ) . '</strong> &nbsp; ';
 
-				if( function_exists( 'mysql' ) && is_super_admin() ) {
+				if ( function_exists( 'mysql' ) && is_super_admin() ) {
 					submit_button( __( 'Remove', 'wp-db-driver' ), 'primary', 'install-db-php', false );
 				}
 
@@ -168,7 +172,7 @@ class WP_DB_Driver_Plugin {
 
 				echo '<p><strong>' . __( 'Another db.php is installed', 'wp-db-driver' ) . '</strong> &nbsp; ';
 
-				if( is_super_admin() ) {
+				if ( is_super_admin() ) {
 					submit_button( __( 'Install', 'wp-db-driver' ), 'primary', 'install-db-php', false );
 				}
 
@@ -183,7 +187,7 @@ class WP_DB_Driver_Plugin {
 
 			echo '<p><strong>' . __( 'No custom db.php installed', 'wp-db-driver' ) . '</strong> &nbsp; ';
 
-			if( is_super_admin() ) {
+			if ( is_super_admin() ) {
 				submit_button( __( 'Install', 'wp-db-driver' ), 'primary', 'install-db-php', false );
 			}
 
@@ -192,61 +196,37 @@ class WP_DB_Driver_Plugin {
 			echo '</form>';
 		}
 
-
-
-		$loaded_pdo = $loaded_mysqli = $loaded_mysql = __( 'Not installed', 'wp-db-driver' );
-
-		if( extension_loaded( 'pdo_mysql' ) )
-			$loaded_pdo = __( 'Installed', 'wp-db-driver' );
-
-		if( extension_loaded( 'mysqli' ) )
-			$loaded_mysqli = __( 'Installed', 'wp-db-driver' );
-
-		if( extension_loaded( 'mysql' ) )
-			$loaded_mysql = __( 'Installed', 'wp-db-driver' );
-
 		echo '<div class="tool-box"><h3 class="title">' . __( 'Supported drivers', 'wp-db-driver' ) . '</h3></div>';
 
 		echo '<table class="form-table">';
-		echo '<tr>';
-		echo '<th>PDO</th>';
-		echo '<td>' . $loaded_pdo . '</td>';
-		echo '</tr>';
 
+		$drivers = WP_DB_Driver_Config::get_drivers();
+		foreach ( $drivers as $driver => $file ) {
+			include_once $file;
 
-		echo '<tr>';
-		echo '<th>MySQLi</th>';
-		echo '<td>' . $loaded_mysqli . '</td>';
-		echo '</tr>';
+			echo '<tr>';
+			echo '<th>' . call_user_func( array( $driver, 'get_name' ) ) . '</th>';
+			echo '<td>';
 
+			if ( call_user_func( array( $driver, 'is_supported' ) ) ) {
+				_e( 'Installed', 'wp-db-driver' );
+			}
+			else {
+				_e( 'Not installed', 'wp-db-driver' );
+			}
 
-		echo '<tr>';
-		echo '<th>MySQL</th>';
-		echo '<td>' . $loaded_mysql . '</td>';
-		echo '</tr>';
+			echo '</td>';
+			echo '</tr>';
+		}
 
 		echo '</table>';
 	}
 
-	public function get_current_driver() {
-		$driver = false;
-
-		if ( defined( 'WPDB_DRIVER' ) )
-			$driver = WPDB_DRIVER;
-		elseif ( extension_loaded( 'pdo_mysql' ) )
-			$driver = 'PDO';
-		elseif ( extension_loaded( 'mysqli' ) )
-			$driver = 'MySQLi';
-		elseif ( extension_loaded( 'mysql' ) )
-			$driver = 'MySQL';
-
-		return $driver;
-	}
-
 }
 
-if( is_admin() )
-	new WP_DB_Driver_Plugin;
+if ( is_admin() ) {
+	$GLOBAL['wp_db_driver_plugin'] = new WP_DB_Driver_Plugin;
+}
 
 register_deactivation_hook( __FILE__, array( 'WP_DB_Driver_Plugin', 'deactivate' ) );
 register_uninstall_hook( __FILE__, array( 'WP_DB_Driver_Plugin', 'uninstall' ) );
